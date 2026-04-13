@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The IT Blueprint</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://js.stripe.com/v3/"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --black:#080808;--white:#f5f0e8;--gold:#c9a84c;--gold-light:#e8c97a;
+  --gray:#111;--gray2:#1a1a1a;--gray3:#222;--muted:#666;--border:#2a2a2a;
+  --green:#34d399;--red:#ef4444;--blue:#4f8fff;--purple:#a855f7;
+}
+body{background:var(--black);color:var(--white);font-family:'Inter',sans-serif;min-height:100vh}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer;font-family:'Inter',sans-serif}
+
+/* VIEWS */
+.view{display:none;min-height:100vh}
+.view.active{display:block}
+
+/* ── NAV ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(8,8,8,0.95);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between}
+.nav-brand{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--gold);letter-spacing:.05em}
+.nav-links{display:flex;align-items:center;gap:8px}
+.nav-btn{padding:7px 16px;font-size:13px;font-weight:600;border:1px solid var(--border);background:transparent;color:var(--muted);border-radius:6px;transition:all .2s}
+.nav-btn:hover{color:var(--white);border-color:#444}
+.nav-btn.primary{background:var(--gold);color:var(--black);border-color:var(--gold)}
+.nav-btn.primary:hover{background:var(--gold-light)}
+
+/* ── LANDING ── */
+#landing{padding-top:56px}
+.hero{min-height:calc(100vh - 56px);display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:60px 24px;position:relative}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(201,168,76,0.07) 0%,transparent 60%);pointer-events:none}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:20px;display:flex;align-items:center;gap:10px}
+.eyebrow::before,.eyebrow::after{content:'';width:32px;height:1px;background:var(--gold)}
+.hero h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(52px,9vw,110px);line-height:.95;margin-bottom:20px}
+.hero h1 span{color:var(--gold)}
+.hero-sub{font-size:17px;color:#aaa;max-width:520px;line-height:1.65;margin-bottom:36px}
+.hero-sub strong{color:var(--white)}
+.btn-gold{display:inline-block;background:var(--gold);color:var(--black);font-weight:800;font-size:13px;letter-spacing:.08em;text-transform:uppercase;padding:15px 40px;border:none;border-radius:0;transition:background .2s}
+.btn-gold:hover{background:var(--gold-light)}
+.price-note{margin-top:12px;font-size:12px;color:var(--muted)}
+.price-note strong{color:var(--white)}
+
+/* Sections */
+.section{padding:80px 24px;max-width:900px;margin:0 auto}
+.section-sm{padding:60px 24px;max-width:700px;margin:0 auto;text-align:center}
+.label{font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:12px}
+.h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(32px,5vw,52px);margin-bottom:24px}
+.muted{color:#aaa;line-height:1.7;font-size:15px}
+
+/* modules grid */
+.modules{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:2px;background:var(--border)}
+.module{background:var(--black);padding:28px 24px}
+.mod-num{font-family:'Bebas Neue',sans-serif;font-size:40px;color:var(--border);line-height:1;margin-bottom:6px}
+.mod-title{font-size:14px;font-weight:700;margin-bottom:6px}
+.mod-desc{font-size:12px;color:var(--muted);line-height:1.6}
+.mod-featured{background:rgba(201,168,76,0.06);border-top:2px solid var(--gold);grid-column:1/-1;padding:24px}
+.mod-featured .mod-title{color:var(--gold);font-size:15px}
+
+/* pricing */
+.price-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--border);max-width:600px;margin:0 auto 32px}
+.price-card{background:var(--black);padding:36px 28px;text-align:center}
+.price-card.featured{background:var(--gold)}
+.price-card.featured *{color:var(--black)!important}
+.price-label{font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
+.price-amt{font-family:'Bebas Neue',sans-serif;font-size:64px;line-height:1;color:var(--white)}
+.price-per{font-size:12px;color:var(--muted);margin-top:4px}
+.price-sub{font-size:12px;color:#888;margin-top:12px;line-height:1.5}
+
+/* ── AUTH ── */
+#auth{padding-top:56px;align-items:center;justify-content:center;min-height:100vh}
+#auth.active{display:flex}
+.auth-box{background:var(--gray);border:1px solid var(--border);padding:40px;width:100%;max-width:400px;margin:24px}
+.auth-box h2{font-family:'Bebas Neue',sans-serif;font-size:32px;margin-bottom:6px}
+.auth-box p{font-size:13px;color:var(--muted);margin-bottom:28px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.field input,.field select,.field textarea{width:100%;padding:11px 14px;background:#0d0d0d;border:1px solid var(--border);color:var(--white);font-size:14px;outline:none;font-family:'Inter',sans-serif;border-radius:0}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--gold)}
+.field textarea{resize:vertical;min-height:80px}
+.btn-full{width:100%;padding:13px;background:var(--gold);color:var(--black);font-weight:800;font-size:13px;letter-spacing:.06em;text-transform:uppercase;border:none;transition:background .2s;margin-top:4px}
+.btn-full:hover{background:var(--gold-light)}
+.btn-outline{width:100%;padding:12px;background:transparent;color:var(--muted);font-weight:600;font-size:13px;border:1px solid var(--border);margin-top:10px;transition:all .2s}
+.btn-outline:hover{color:var(--white);border-color:#444}
+.auth-switch{text-align:center;margin-top:20px;font-size:13px;color:var(--muted)}
+.auth-switch a{color:var(--gold);cursor:pointer}
+.msg{font-size:13px;margin-top:12px;padding:10px 14px;border-radius:0}
+.msg.error{background:rgba(239,68,68,0.1);color:var(--red);border:1px solid rgba(239,68,68,0.2)}
+.msg.success{background:rgba(52,211,153,0.1);color:var(--green);border:1px solid rgba(52,211,153,0.2)}
+
+/* ── DASHBOARD ── */
+#dashboard{padding-top:56px}
+.dash-wrap{max-width:1100px;margin:0 auto;padding:32px 24px}
+.dash-header{margin-bottom:32px}
+.dash-header h1{font-family:'Bebas Neue',sans-serif;font-size:36px}
+.dash-header p{color:var(--muted);font-size:14px;margin-top:4px}
+
+/* stat cards */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:32px}
+.stat{background:var(--gray);border:1px solid var(--border);padding:20px;border-radius:2px}
+.stat-val{font-family:'Bebas Neue',sans-serif;font-size:40px;line-height:1}
+.stat-label{font-size:11px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.08em}
+
+/* panels */
+.panels{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.panels.single{grid-template-columns:1fr}
+@media(max-width:700px){.panels{grid-template-columns:1fr}.price-grid{grid-template-columns:1fr}}
+.panel{background:var(--gray);border:1px solid var(--border);padding:24px;border-radius:2px}
+.panel-title{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:16px}
+
+/* progress bar */
+.prog-wrap{margin-bottom:12px}
+.prog-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px}
+.prog-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+.prog-fill{height:100%;background:var(--gold);border-radius:2px;transition:width .4s}
+
+/* cert badges */
+.cert-list{display:flex;flex-direction:column;gap:10px}
+.cert-item{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--gray2);border:1px solid var(--border)}
+.cert-name{font-size:13px;font-weight:600}
+.cert-status{font-size:11px;font-weight:700;padding:3px 10px;border-radius:2px}
+.cert-status.studying{background:rgba(79,143,255,0.15);color:var(--blue)}
+.cert-status.scheduled{background:rgba(168,85,247,0.15);color:var(--purple)}
+.cert-status.passed{background:rgba(52,211,153,0.15);color:var(--green)}
+.cert-status.failed{background:rgba(239,68,68,0.15);color:var(--red)}
+
+/* resource links */
+.resource-list{display:flex;flex-direction:column;gap:8px}
+.resource-item{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--gray2);border:1px solid var(--border);font-size:13px;cursor:pointer;transition:border-color .2s}
+.resource-item:hover{border-color:var(--gold)}
+.resource-icon{font-size:16px;flex-shrink:0}
+.resource-text strong{display:block;font-size:13px}
+.resource-text span{font-size:11px;color:var(--muted)}
+
+/* weekly goals */
+.goal-list{display:flex;flex-direction:column;gap:8px}
+.goal-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--gray2);border:1px solid var(--border);font-size:13px;cursor:pointer}
+.goal-item input[type=checkbox]{accent-color:var(--gold);width:16px;height:16px;flex-shrink:0}
+.goal-item.done{opacity:.5;text-decoration:line-through}
+
+/* ── ADMIN ── */
+.admin-tabs{display:flex;gap:2px;margin-bottom:24px;background:var(--border)}
+.tab{padding:10px 20px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:var(--gray);color:var(--muted);border:none;cursor:pointer;transition:all .2s}
+.tab.active{background:var(--gold);color:var(--black)}
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+/* member table */
+.member-table{width:100%;border-collapse:collapse;font-size:13px}
+.member-table th{text-align:left;padding:10px 12px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)}
+.member-table td{padding:12px;border-bottom:1px solid var(--border)}
+.member-table tr:hover td{background:var(--gray2)}
+.badge{display:inline-block;font-size:10px;font-weight:700;padding:3px 8px;border-radius:2px}
+.badge.active{background:rgba(52,211,153,0.15);color:var(--green)}
+.badge.pending{background:rgba(201,168,76,0.15);color:var(--gold)}
+.badge.cancelled{background:rgba(239,68,68,0.15);color:var(--red)}
+.badge.completed{background:rgba(79,143,255,0.15);color:var(--blue)}
+
+/* application cards */
+.app-list{display:flex;flex-direction:column;gap:12px}
+.app-card{background:var(--gray2);border:1px solid var(--border);padding:20px}
+.app-card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.app-card h4{font-size:15px;font-weight:700}
+.app-card .email{font-size:12px;color:var(--muted);margin-top:2px}
+.app-card .why{font-size:13px;color:#aaa;margin-bottom:14px;line-height:1.5;font-style:italic}
+.app-actions{display:flex;gap:8px}
+.btn-sm{padding:7px 14px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border:none;cursor:pointer;transition:all .2s}
+.btn-approve{background:var(--green);color:var(--black)}
+.btn-reject{background:transparent;border:1px solid var(--border);color:var(--muted)}
+.btn-reject:hover{border-color:var(--red);color:var(--red)}
+
+/* empty state */
+.empty{text-align:center;padding:48px;color:var(--muted);font-size:14px}
+
+/* day buttons */
+.day-btn{padding:8px 14px;font-size:12px;font-weight:700;background:var(--gray2);border:1px solid var(--border);color:var(--muted);cursor:pointer;transition:all .2s;border-radius:2px;text-align:center;line-height:1.4}
+.day-btn:hover{border-color:#555;color:var(--white)}
+.day-btn.selected{background:var(--gold);color:var(--black);border-color:var(--gold)}
+.loading{display:flex;align-items:center;justify-content:center;padding:40px;color:var(--muted);font-size:13px;gap:8px}
+.spin{width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* apply modal */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200;display:none;align-items:center;justify-content:center;padding:24px}
+.modal-bg.open{display:flex}
+.modal{background:var(--gray);border:1px solid var(--border);padding:36px;width:100%;max-width:460px;max-height:90vh;overflow-y:auto}
+.modal h2{font-family:'Bebas Neue',sans-serif;font-size:28px;margin-bottom:6px}
+.modal p{font-size:13px;color:var(--muted);margin-bottom:24px}
+.modal-close{position:absolute;top:12px;right:16px;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer}
+
+/* toast */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--gray);border:1px solid var(--border);padding:14px 20px;font-size:13px;z-index:300;transform:translateY(100px);opacity:0;transition:all .3s;border-radius:2px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.gold{border-color:var(--gold);color:var(--gold)}
+.toast.err{border-color:var(--red);color:var(--red)}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-brand">The IT Blueprint</div>
+  <div class="nav-links" id="nav-links">
+    <button class="nav-btn" onclick="showView('auth','login')">Sign In</button>
+    <button class="nav-btn primary" onclick="openApply()">Apply Now</button>
+  </div>
+</nav>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- APPLY MODAL -->
+<div class="modal-bg" id="apply-modal">
+  <div class="modal" style="position:relative">
+    <button class="modal-close" onclick="closeApply()">✕</button>
+    <h2>Reserve Your Spot</h2>
+    <p>Limited spots available. Dennis will reach out within 24 hours.</p>
+    <div class="field"><label>Full Name *</label><input id="app-name" type="text" placeholder="Your name" /></div>
+    <div class="field"><label>Email *</label><input id="app-email" type="email" placeholder="your@email.com" /></div>
+    <div class="field">
+      <label>Payment Option</label>
+      <select id="app-plan">
+        <option value="pay_in_full">Pay in Full — $1,000 (includes Pluralsight)</option>
+        <option value="payment_plan">Payment Plan — $167/month x 6</option>
+      </select>
+    </div>
+    <div class="field"><label>Why do you want to break into IT? *</label><textarea id="app-why" placeholder="Tell Dennis in one sentence..."></textarea></div>
+    <button class="btn-full" onclick="submitApplication()">Submit Application →</button>
+    <div id="app-msg"></div>
+  </div>
+</div>
+
+<!-- ═══════════════ LANDING ═══════════════ -->
+<div class="view active" id="landing">
+  <section class="hero">
+    <div class="eyebrow">90-Day Community Program</div>
+    <h1>Nobody Who<br>Looked Like Me<br><span>Showed Me</span><br>The Way.</h1>
+    <p class="hero-sub">So I'm becoming that person. <strong>The IT Blueprint</strong> — from zero to your first IT job in 90 days. No degree. Not a lot of money. No excuses.</p>
+    <button class="btn-gold" onclick="openApply()">I'm Ready — Show Me How</button>
+    <p class="price-note">Starting at <strong>$167/month</strong> · Pluralsight access included · Limited spots</p>
+  </section>
+
+  <!-- WHAT YOU GET -->
+  <div style="background:var(--gray);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:64px 24px">
+    <div style="max-width:900px;margin:0 auto">
+      <div class="label" style="text-align:center">What's Inside</div>
+      <h2 class="h2" style="text-align:center">Everything You Need to Get Hired</h2>
+      <div class="modules">
+        <div class="mod-featured">
+          <div class="mod-title">⭐ Pluralsight Full Access — Included ($564 value)</div>
+          <div class="mod-desc" style="color:#aaa;margin-top:6px">6,500+ expert courses · 3,500+ hands-on labs · CompTIA cert practice exams · AI & cloud sandboxes · Skill IQ assessments</div>
+        </div>
+        <div class="module"><div class="mod-num">01</div><div class="mod-title">Your Cert Roadmap</div><div class="mod-desc">A+, Network+, Security+ in order. No guessing. No wasted money on the wrong path.</div></div>
+        <div class="module"><div class="mod-num">02</div><div class="mod-title">Study System + Timeline</div><div class="mod-desc">Week-by-week plan for each cert with free and low-cost resources.</div></div>
+        <div class="module"><div class="mod-num">03</div><div class="mod-title">Weekly Live Calls</div><div class="mod-desc">Group coaching with Dennis every week. Real answers from real experience.</div></div>
+        <div class="module"><div class="mod-num">04</div><div class="mod-title">Community + Accountability</div><div class="mod-desc">Private community. Daily check-ins. People who get it.</div></div>
+        <div class="module"><div class="mod-num">05</div><div class="mod-title">Resume + LinkedIn</div><div class="mod-desc">How to present yourself before you have years of experience.</div></div>
+        <div class="module"><div class="mod-num">06</div><div class="mod-title">AI in IT — The Edge</div><div class="mod-desc">Use Claude, Copilot, ChatGPT to study faster and stand out.</div></div>
+        <div class="module"><div class="mod-num">07</div><div class="mod-title">Dennis in Your Corner</div><div class="mod-desc">Self-taught. AI Specialist. SaaS Founder. I will stand by you until the end.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRICING -->
+  <div class="section-sm">
+    <div class="label">Join The Blueprint</div>
+    <h2 class="h2">Simple Pricing</h2>
+    <div class="price-grid">
+      <div class="price-card">
+        <div class="price-label">Pay In Full</div>
+        <div class="price-amt">$1,000</div>
+        <div class="price-per">one time · best value</div>
+        <div class="price-sub">Full 90-day program + Pluralsight access ($564 value)</div>
+        <button onclick="openITBCheckout('pay_in_full')" style="margin-top:20px;width:100%;padding:14px;background:#c9a84c;color:#000;border:none;border-radius:10px;font-weight:800;font-size:15px;cursor:pointer;">Enroll Now — $1,000 →</button>
+      </div>
+      <div class="price-card featured">
+        <div class="price-label">Payment Plan</div>
+        <div class="price-amt">$167</div>
+        <div class="price-per">per month · 6 months</div>
+        <div class="price-sub">Same access. Less than $40/week.</div>
+        <button onclick="openITBCheckout('payment_plan')" style="margin-top:20px;width:100%;padding:14px;background:#000;color:#c9a84c;border:2px solid #c9a84c;border-radius:10px;font-weight:800;font-size:15px;cursor:pointer;">Start Plan — $167/mo →</button>
+      </div>
+    </div>
+    <button class="btn-gold" onclick="openApply()">Apply Now →</button>
+    <p class="muted" style="margin-top:16px;font-size:13px"><strong style="color:var(--white)">My promise:</strong> I will stand by you until the end.</p>
+  </div>
+</div>
+
+<!-- ═══════════════ AUTH ═══════════════ -->
+<div class="view" id="auth">
+  <div class="auth-box">
+    <!-- LOGIN -->
+    <div id="login-form">
+      <h2>Welcome Back</h2>
+      <p>Sign in to your Blueprint account</p>
+      <div class="field"><label>Email</label><input id="login-email" type="email" placeholder="your@email.com" /></div>
+      <div class="field"><label>Password</label><input id="login-pass" type="password" placeholder="••••••••" /></div>
+      <button class="btn-full" onclick="login()">Sign In</button>
+      <div id="login-msg"></div>
+      <div class="auth-switch">New member? <a onclick="toggleAuth('signup')">Create account</a></div>
+    </div>
+    <!-- SIGNUP -->
+    <div id="signup-form" style="display:none">
+      <h2>Create Account</h2>
+      <p>Access your Blueprint dashboard</p>
+      <div class="field"><label>Full Name</label><input id="signup-name" type="text" placeholder="Your name" /></div>
+      <div class="field"><label>Email</label><input id="signup-email" type="email" placeholder="your@email.com" /></div>
+      <div class="field"><label>Password</label><input id="signup-pass" type="password" placeholder="Min 8 characters" /></div>
+      <button class="btn-full" onclick="signup()">Create Account</button>
+      <div id="signup-msg"></div>
+      <div class="auth-switch">Already have an account? <a onclick="toggleAuth('login')">Sign in</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ MEMBER DASHBOARD ═══════════════ -->
+<div class="view" id="dashboard">
+  <div class="dash-wrap">
+    <div class="dash-header">
+      <h1>My Blueprint Dashboard</h1>
+      <p id="dash-greeting">Welcome back</p>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-val" id="d-week" style="color:var(--gold)">—</div>
+        <div class="stat-label">Current Week</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val" id="d-phase" style="color:var(--blue);font-size:24px;padding-top:8px">—</div>
+        <div class="stat-label">Current Phase</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val" id="d-certs" style="color:var(--green)">—</div>
+        <div class="stat-label">Certs Passed</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val" id="d-days" style="color:var(--purple)">—</div>
+        <div class="stat-label">Days Remaining</div>
+      </div>
+    </div>
+
+    <!-- Progress + Certs -->
+    <div class="panels">
+      <div class="panel">
+        <div class="panel-title">90-Day Progress</div>
+        <div class="prog-wrap">
+          <div class="prog-label"><span>Foundation</span><span id="p1">0%</span></div>
+          <div class="prog-bar"><div class="prog-fill" id="pf1" style="width:0%"></div></div>
+        </div>
+        <div class="prog-wrap">
+          <div class="prog-label"><span>First Cert Push</span><span id="p2">0%</span></div>
+          <div class="prog-bar"><div class="prog-fill" id="pf2" style="width:0%"></div></div>
+        </div>
+        <div class="prog-wrap">
+          <div class="prog-label"><span>Level Up</span><span id="p3">0%</span></div>
+          <div class="prog-bar"><div class="prog-fill" id="pf3" style="width:0%"></div></div>
+        </div>
+        <div class="prog-wrap">
+          <div class="prog-label"><span>Job Ready</span><span id="p4">0%</span></div>
+          <div class="prog-bar"><div class="prog-fill" id="pf4" style="width:0%"></div></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Cert Tracker</div>
+        <div class="cert-list" id="cert-list">
+          <div class="cert-item"><span class="cert-name">CompTIA A+ Core 1</span><span class="cert-status studying">Studying</span></div>
+          <div class="cert-item"><span class="cert-name">CompTIA A+ Core 2</span><span class="cert-status studying">Studying</span></div>
+          <div class="cert-item"><span class="cert-name">CompTIA Network+</span><span class="cert-status studying">Up Next</span></div>
+          <div class="cert-item"><span class="cert-name">CompTIA Security+</span><span class="cert-status studying">Up Next</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Resources + Goals -->
+    <div class="panels">
+      <div class="panel">
+        <div class="panel-title">Training Resources</div>
+        <div class="resource-list">
+          <div class="resource-item" onclick="openLink('https://www.pluralsight.com')">
+            <span class="resource-icon">🎓</span>
+            <div class="resource-text"><strong>Pluralsight</strong><span>Your included training platform — 6,500+ courses</span></div>
+          </div>
+          <div class="resource-item" onclick="openLink('https://www.professormesser.com')">
+            <span class="resource-icon">📹</span>
+            <div class="resource-text"><strong>Professor Messer</strong><span>Free A+, Network+, Security+ video courses</span></div>
+          </div>
+          <div class="resource-item" onclick="openLink('https://www.examcompass.com')">
+            <span class="resource-icon">✏️</span>
+            <div class="resource-text"><strong>ExamCompass</strong><span>Free practice questions — no sign-up needed</span></div>
+          </div>
+          <div class="resource-item" onclick="openLink('https://getcertified4less.com')">
+            <span class="resource-icon">🎫</span>
+            <div class="resource-text"><strong>GetCertified4Less</strong><span>Discounted exam vouchers — 10–20% off</span></div>
+          </div>
+          <div class="resource-item" onclick="openLink('https://reddit.com/r/CompTIA')">
+            <span class="resource-icon">💬</span>
+            <div class="resource-text"><strong>r/CompTIA</strong><span>Community study tips and support</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">This Week's Goals</div>
+        <div class="goal-list" id="goal-list">
+          <div class="goal-item"><input type="checkbox" onchange="toggleGoal(this)"><span>Watch Professor Messer A+ Core 1 — 1hr</span></div>
+          <div class="goal-item"><input type="checkbox" onchange="toggleGoal(this)"><span>Complete 50 ExamCompass practice questions</span></div>
+          <div class="goal-item"><input type="checkbox" onchange="toggleGoal(this)"><span>Post your weekly goal in Discord</span></div>
+          <div class="goal-item"><input type="checkbox" onchange="toggleGoal(this)"><span>Attend weekly live call</span></div>
+          <div class="goal-item"><input type="checkbox" onchange="toggleGoal(this)"><span>Check in with accountability partner</span></div>
+        </div>
+        <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Next Call</div>
+          <div style="font-size:14px;font-weight:600">📅 Every Tuesday @ 7PM CST</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px">Google Meet — link in Discord</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Exam Cost Reference -->
+    <div class="panel" style="margin-bottom:16px">
+      <div class="panel-title">Exam Budget Reference</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px">
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--gold);margin-bottom:6px">Month 1 — A+</div>
+          <div style="font-size:13px;color:#aaa">2 exams · ~$460 discounted<br>GetCertified4Less.com</div>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--gold);margin-bottom:6px">Month 2 — Network+</div>
+          <div style="font-size:13px;color:#aaa">1 exam · ~$320 discounted<br>GetCertified4Less.com</div>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--gold);margin-bottom:6px">Month 3 — Security+</div>
+          <div style="font-size:13px;color:#aaa">1 exam · ~$370 discounted<br>GetCertified4Less.com</div>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:6px">Total Est. Exam Cost</div>
+          <div style="font-size:13px;color:#aaa">~$1,150–$1,225 all-in<br>First paycheck covers it</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Study Schedule Builder -->
+    <div class="panel" style="margin-bottom:16px">
+      <div class="panel-title">📅 Build My 7-Hour Study Schedule</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:20px">Select the days and times you're available to study. We'll build your personal 7-hour weekly plan around your life.</p>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin-bottom:24px">
+        <!-- Day selector -->
+        <div>
+          <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:12px">Available Days</div>
+          <div id="day-selector" style="display:flex;flex-wrap:wrap;gap:8px">
+            <button class="day-btn" data-day="Mon" onclick="toggleDay(this)">Mon</button>
+            <button class="day-btn" data-day="Tue" onclick="toggleDay(this)">Tue</button>
+            <button class="day-btn" data-day="Wed" onclick="toggleDay(this)">Wed</button>
+            <button class="day-btn" data-day="Thu" onclick="toggleDay(this)">Thu</button>
+            <button class="day-btn" data-day="Fri" onclick="toggleDay(this)">Fri</button>
+            <button class="day-btn" data-day="Sat" onclick="toggleDay(this)">Sat</button>
+            <button class="day-btn" data-day="Sun" onclick="toggleDay(this)">Sun</button>
+          </div>
+        </div>
+
+        <!-- Time preference -->
+        <div>
+          <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:12px">Preferred Study Time</div>
+          <div id="time-selector" style="display:flex;flex-wrap:wrap;gap:8px">
+            <button class="day-btn" data-time="morning" onclick="toggleTime(this)">🌅 Morning<br><span style="font-size:10px">6am–12pm</span></button>
+            <button class="day-btn" data-time="afternoon" onclick="toggleTime(this)">☀️ Afternoon<br><span style="font-size:10px">12pm–5pm</span></button>
+            <button class="day-btn" data-time="evening" onclick="toggleTime(this)">🌙 Evening<br><span style="font-size:10px">5pm–10pm</span></button>
+          </div>
+        </div>
+
+        <!-- Hours per session -->
+        <div>
+          <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:12px">Hours Per Session</div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <input type="range" id="hours-slider" min="0.5" max="3" step="0.5" value="1" oninput="updateHours(this.value)" style="flex:1;accent-color:var(--gold)">
+            <span id="hours-val" style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--gold);min-width:40px">1h</span>
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-top:6px" id="days-needed">Select days to calculate</div>
+        </div>
+      </div>
+
+      <button class="btn-gold" style="padding:12px 32px;font-size:13px" onclick="buildSchedule()">Generate My Schedule →</button>
+
+      <!-- Generated Schedule -->
+      <div id="schedule-output" style="display:none;margin-top:24px;padding-top:24px;border-top:1px solid var(--border)">
+        <div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:16px;text-transform:uppercase;letter-spacing:.08em">Your Personal Study Schedule</div>
+        <div id="schedule-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px"></div>
+        <div id="schedule-summary" style="margin-top:16px;padding:14px;background:var(--gray2);border:1px solid var(--border);font-size:13px;line-height:1.7"></div>
+        <div id="schedule-plan" style="margin-top:12px;display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════ ADMIN ═══════════════ -->
+<div class="view" id="admin">
+  <div class="dash-wrap">
+    <div class="dash-header">
+      <h1>Admin Dashboard</h1>
+      <p>IT Blueprint — Dennis Guerra</p>
+    </div>
+
+    <!-- Admin Stats -->
+    <div class="stats">
+      <div class="stat"><div class="stat-val" id="a-total" style="color:var(--gold)">—</div><div class="stat-label">Total Members</div></div>
+      <div class="stat"><div class="stat-val" id="a-active" style="color:var(--green)">—</div><div class="stat-label">Active</div></div>
+      <div class="stat"><div class="stat-val" id="a-apps" style="color:var(--blue)">—</div><div class="stat-label">New Applications</div></div>
+      <div class="stat"><div class="stat-val" id="a-revenue" style="color:var(--purple);font-size:28px;padding-top:6px">—</div><div class="stat-label">Est. Revenue</div></div>
+    </div>
+
+    <!-- Admin Tabs -->
+    <div class="admin-tabs">
+      <button class="tab active" onclick="switchTab('applications')">Applications</button>
+      <button class="tab" onclick="switchTab('members')">Members</button>
+    </div>
+
+    <!-- Applications -->
+    <div class="tab-content active" id="tab-applications">
+      <div id="app-list-wrap"><div class="loading"><div class="spin"></div> Loading applications...</div></div>
+    </div>
+
+    <!-- Members -->
+    <div class="tab-content" id="tab-members">
+      <div class="panel">
+        <div id="member-table-wrap"><div class="loading"><div class="spin"></div> Loading members...</div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://ylqbowawblpdoxbbiuey.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlscWJvd2F3YmxwZG94YmJpdWV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMTM2NjgsImV4cCI6MjA5MTU4OTY2OH0.5yjH3gNonc1RJPAQ8AG1Qw_xNa_s5HawzlGbsWG2FWw';
+const ADMIN_EMAIL = 'dennis@itforbusinesssmb.com';
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+let currentUser = null;
+
+// ── INIT ──
+async function init() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    currentUser = session.user;
+    await routeUser();
+  }
+}
+
+async function routeUser() {
+  if (!currentUser) { showView('landing'); return; }
+  updateNav(true);
+  if (currentUser.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+    showView('admin');
+    loadAdminData();
+  } else {
+    showView('dashboard');
+    loadDashboard();
+  }
+}
+
+// ── NAV ──
+function updateNav(loggedIn) {
+  const nav = document.getElementById('nav-links');
+  if (loggedIn) {
+    const name = currentUser.user_metadata?.full_name || currentUser.email.split('@')[0];
+    const first = name.split(' ')[0];
+    nav.innerHTML = `<span style="font-size:13px;color:var(--muted);margin-right:4px">👋 <strong style="color:var(--white)">${first}</strong></span><button class="nav-btn" onclick="logout()">Sign Out</button>`;
+  } else {
+    nav.innerHTML = `<button class="nav-btn" onclick="showView('auth','login')">Sign In</button><button class="nav-btn primary" onclick="openApply()">Apply Now</button>`;
+  }
+}
+
+// ── VIEWS ──
+function showView(id, sub) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (sub) toggleAuth(sub);
+  window.scrollTo(0,0);
+}
+
+// ── APPLY ──
+function openApply() { document.getElementById('apply-modal').classList.add('open'); }
+function closeApply() { document.getElementById('apply-modal').classList.remove('open'); }
+
+async function submitApplication() {
+  const name = document.getElementById('app-name').value.trim();
+  const email = document.getElementById('app-email').value.trim();
+  const plan = document.getElementById('app-plan').value;
+  const why = document.getElementById('app-why').value.trim();
+  const msg = document.getElementById('app-msg');
+
+  if (!name || !email || !why) {
+    msg.className='msg error'; msg.textContent='Please fill out all fields.'; return;
+  }
+
+  const { error } = await sb.from('applications').insert({ full_name: name, email, plan, why_it: why });
+  if (error) { msg.className='msg error'; msg.textContent='Something went wrong. Try again.'; return; }
+
+  msg.className='msg success'; msg.textContent='✓ Application received! Dennis will reach out within 24 hours.';
+  setTimeout(closeApply, 3000);
+}
+
+// ── AUTH ──
+function toggleAuth(mode) {
+  document.getElementById('login-form').style.display = mode === 'login' ? 'block' : 'none';
+  document.getElementById('signup-form').style.display = mode === 'signup' ? 'block' : 'none';
+}
+
+async function login() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  const msg = document.getElementById('login-msg');
+  msg.textContent = '';
+
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+  if (error) { msg.className='msg error'; msg.textContent=error.message; return; }
+  currentUser = data.user;
+  await routeUser();
+}
+
+async function signup() {
+  const name = document.getElementById('signup-name').value.trim();
+  const email = document.getElementById('signup-email').value.trim();
+  const pass = document.getElementById('signup-pass').value;
+  const msg = document.getElementById('signup-msg');
+
+  if (!name || !email || !pass) { msg.className='msg error'; msg.textContent='All fields required.'; return; }
+
+  const { data, error } = await sb.auth.signUp({ email, password: pass, options: { data: { full_name: name } } });
+  if (error) { msg.className='msg error'; msg.textContent=error.message; return; }
+
+  msg.className='msg success'; msg.textContent='✓ Account created! Check your email to confirm, then sign in.';
+}
+
+async function logout() {
+  await sb.auth.signOut();
+  currentUser = null;
+  updateNav(false);
+  showView('landing');
+}
+
+// ── DASHBOARD ──
+async function loadDashboard() {
+  const name = currentUser.user_metadata?.full_name || currentUser.email.split('@')[0];
+  document.getElementById('dash-greeting').textContent = `Welcome back, ${name}`;
+
+  // Load member data
+  const { data: member } = await sb.from('members').select('*').eq('email', currentUser.email).single();
+
+  if (member && member.cohort_start) {
+    const start = new Date(member.cohort_start);
+    const now = new Date();
+    const daysPassed = Math.floor((now - start) / 86400000);
+    const week = Math.min(Math.floor(daysPassed / 7) + 1, 13);
+    const daysLeft = Math.max(90 - daysPassed, 0);
+    const phase = week <= 3 ? 'Foundation' : week <= 7 ? 'First Cert' : week <= 10 ? 'Level Up' : 'Job Ready';
+
+    document.getElementById('d-week').textContent = week;
+    document.getElementById('d-phase').textContent = phase;
+    document.getElementById('d-days').textContent = daysLeft;
+
+    // Progress bars
+    const pct = (w) => Math.min(Math.round((Math.max(daysPassed - w[0], 0) / (w[1] - w[0])) * 100), 100);
+    const phases = [[0,21],[21,49],[49,70],[70,90]];
+    phases.forEach((p, i) => {
+      const v = pct(p);
+      document.getElementById(`p${i+1}`).textContent = v + '%';
+      document.getElementById(`pf${i+1}`).style.width = v + '%';
+    });
+  } else {
+    document.getElementById('d-week').textContent = '—';
+    document.getElementById('d-phase').textContent = 'Pending Start';
+    document.getElementById('d-days').textContent = '90';
+    document.getElementById('d-certs').textContent = '0';
+  }
+
+  // Load certs
+  const { data: certs } = await sb.from('cert_attempts').select('*').eq('member_id', member?.id || '');
+  if (certs && certs.length) {
+    document.getElementById('d-certs').textContent = certs.filter(c => c.status === 'passed').length;
+  } else {
+    document.getElementById('d-certs').textContent = '0';
+  }
+}
+
+function toggleGoal(cb) { cb.closest('.goal-item').classList.toggle('done', cb.checked); }
+function openLink(url) { window.open(url, '_blank'); }
+
+// ── ADMIN ──
+async function loadAdminData() {
+  const { data: members } = await sb.from('members').select('*').order('created_at', { ascending: false });
+  const { data: apps } = await sb.from('applications').select('*').order('created_at', { ascending: false });
+
+  const active = (members || []).filter(m => m.status === 'active').length;
+  const newApps = (apps || []).filter(a => a.status === 'new').length;
+  const revenue = (members || []).filter(m => m.status === 'active').reduce((s, m) => s + (m.plan === 'pay_in_full' ? 1000 : 167), 0);
+
+  document.getElementById('a-total').textContent = (members || []).length;
+  document.getElementById('a-active').textContent = active;
+  document.getElementById('a-apps').textContent = newApps;
+  document.getElementById('a-revenue').textContent = '$' + revenue.toLocaleString();
+
+  renderApps(apps || []);
+  renderMembers(members || []);
+}
+
+function renderApps(apps) {
+  const wrap = document.getElementById('app-list-wrap');
+  if (!apps.length) { wrap.innerHTML = '<div class="empty">No applications yet.</div>'; return; }
+
+  wrap.innerHTML = '<div class="app-list">' + apps.map(a => `
+    <div class="app-card" id="app-${a.id}">
+      <div class="app-card-header">
+        <div><h4>${a.full_name}</h4><div class="email">${a.email} · ${a.plan === 'pay_in_full' ? 'Pay in Full $1,000' : '$167/mo plan'}</div></div>
+        <span class="badge ${a.status}">${a.status}</span>
+      </div>
+      <div class="why">"${a.why_it || 'No reason provided'}"</div>
+      <div class="app-actions">
+        <button class="btn-sm btn-approve" onclick="approveApp('${a.id}','${a.full_name}','${a.email}','${a.plan}')">✓ Approve</button>
+        <button class="btn-sm btn-reject" onclick="rejectApp('${a.id}')">Reject</button>
+      </div>
+    </div>`).join('') + '</div>';
+}
+
+function renderMembers(members) {
+  const wrap = document.getElementById('member-table-wrap');
+  if (!members.length) { wrap.innerHTML = '<div class="empty">No members yet.</div>'; return; }
+
+  wrap.innerHTML = `<table class="member-table">
+    <thead><tr><th>Name</th><th>Email</th><th>Plan</th><th>Status</th><th>Pluralsight</th><th>Start</th></tr></thead>
+    <tbody>${members.map(m => `
+      <tr>
+        <td>${m.full_name}</td>
+        <td style="color:var(--muted)">${m.email}</td>
+        <td>${m.plan === 'pay_in_full' ? '$1,000' : '$167/mo'}</td>
+        <td><span class="badge ${m.status}">${m.status}</span></td>
+        <td>${m.pluralsight_invited ? '<span style="color:var(--green)">✓ Invited</span>' : '<button class="btn-sm" style="background:var(--blue);color:#000;padding:4px 10px" onclick="markPluralsight(\''+m.id+'\')">Invite</button>'}</td>
+        <td style="color:var(--muted)">${m.cohort_start || '—'}</td>
+      </tr>`).join('')}
+    </tbody></table>`;
+}
+
+async function approveApp(id, name, email, plan) {
+  const start = new Date().toISOString().split('T')[0];
+  await sb.from('members').insert({ full_name: name, email, plan, status: 'active', cohort_start: start });
+  await sb.from('applications').update({ status: 'approved' }).eq('id', id);
+  toast('✓ ' + name + ' approved and added as member', 'gold');
+  loadAdminData();
+}
+
+async function rejectApp(id) {
+  await sb.from('applications').update({ status: 'rejected' }).eq('id', id);
+  toast('Application rejected', 'err');
+  loadAdminData();
+}
+
+async function markPluralsight(memberId) {
+  await sb.from('members').update({ pluralsight_invited: true }).eq('id', memberId);
+  toast('✓ Marked as Pluralsight invited', 'gold');
+  loadAdminData();
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+// ── TOAST ──
+function toast(msg, type='gold') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + type + ' show';
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── SCHEDULE BUILDER ──
+let selectedDays = [];
+let selectedTime = '';
+let hoursPerSession = 1;
+
+function toggleDay(btn) {
+  const day = btn.dataset.day;
+  if (selectedDays.includes(day)) {
+    selectedDays = selectedDays.filter(d => d !== day);
+    btn.classList.remove('selected');
+  } else {
+    selectedDays.push(day);
+    btn.classList.add('selected');
+  }
+  updateDaysNeeded();
+}
+
+function toggleTime(btn) {
+  document.querySelectorAll('#time-selector .day-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedTime = btn.dataset.time;
+}
+
+function updateHours(val) {
+  hoursPerSession = parseFloat(val);
+  document.getElementById('hours-val').textContent = val + 'h';
+  updateDaysNeeded();
+}
+
+function updateDaysNeeded() {
+  const el = document.getElementById('days-needed');
+  if (!selectedDays.length) { el.textContent = 'Select days to calculate'; return; }
+  const totalHrs = selectedDays.length * hoursPerSession;
+  const diff = totalHrs - 7;
+  if (Math.abs(diff) < 0.1) {
+    el.style.color = 'var(--green)';
+    el.textContent = '✓ Perfect — exactly 7 hours/week';
+  } else if (diff < 0) {
+    el.style.color = 'var(--red)';
+    el.textContent = `${totalHrs}h/week — need ${(7 - totalHrs).toFixed(1)} more hours`;
+  } else {
+    el.style.color = 'var(--gold)';
+    el.textContent = `${totalHrs}h/week — great, above target!`;
+  }
+}
+
+function buildSchedule() {
+  if (!selectedDays.length) { toast('Select at least one day', 'err'); return; }
+  if (!selectedTime) { toast('Select a preferred time', 'err'); return; }
+
+  const timeLabels = { morning: '7:00 AM – 9:00 AM', afternoon: '1:00 PM – 3:00 PM', evening: '7:00 PM – 9:00 PM' };
+  const timeLabel = timeLabels[selectedTime];
+  const totalHrs = (selectedDays.length * hoursPerSession).toFixed(1);
+
+  const dayOrder = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const orderedDays = dayOrder.filter(d => selectedDays.includes(d));
+
+  const activities = [
+    { label: 'Watch Pluralsight / Messer video', icon: '📹', color: 'var(--blue)' },
+    { label: 'Practice questions (ExamCompass)', icon: '✏️', color: 'var(--purple)' },
+    { label: 'Review notes + weak areas', icon: '📋', color: 'var(--gold)' },
+    { label: 'Hands-on lab (Pluralsight)', icon: '🖥️', color: 'var(--green)' },
+    { label: 'Full mock exam', icon: '🎯', color: 'var(--red)' },
+    { label: 'Community check-in + Discord', icon: '💬', color: 'var(--muted)' },
+    { label: 'Review + plan next session', icon: '📅', color: 'var(--gold)' },
+  ];
+
+  const grid = document.getElementById('schedule-grid');
+  grid.innerHTML = orderedDays.map((day, i) => {
+    const act = activities[i % activities.length];
+    return `<div style="background:var(--gray2);border:1px solid var(--border);padding:14px;border-top:2px solid ${act.color}">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">${day}</div>
+      <div style="font-size:18px;margin-bottom:4px">${act.icon}</div>
+      <div style="font-size:12px;font-weight:600;color:var(--white);margin-bottom:4px">${act.label}</div>
+      <div style="font-size:11px;color:var(--muted)">${timeLabel} · ${hoursPerSession}h</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('schedule-summary').innerHTML = `
+    <strong style="color:var(--white)">Your schedule: ${orderedDays.join(', ')}</strong> · ${hoursPerSession}h per session · ${timeLabel}<br>
+    <span style="color:var(--gold)">Total: ${totalHrs} hours/week</span> — 
+    <span style="color:var(--muted)">90 days × ${totalHrs}hrs = <strong style="color:var(--white)">${(parseFloat(totalHrs) * 13).toFixed(0)} total study hours</strong> to get 3 certs</span>`;
+
+  const certPlan = [
+    { cert: 'Month 1 — A+ Core 1 + Core 2', weeks: 'Weeks 1–4', task: 'Professor Messer videos → ExamCompass drills → Mock exams → Test day' },
+    { cert: 'Month 2 — Network+', weeks: 'Weeks 5–8', task: 'Messer N10-009 → Subnetting drills → PBQ practice → Test day' },
+    { cert: 'Month 3 — Security+', weeks: 'Weeks 9–13', task: 'Messer SY0-701 → Dion practice tests → Full mock exams → Test day' },
+  ];
+
+  document.getElementById('schedule-plan').innerHTML = certPlan.map(c => `
+    <div style="background:var(--gray2);border:1px solid var(--border);padding:14px;display:flex;gap:16px;align-items:flex-start">
+      <div style="flex-shrink:0">
+        <div style="font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.06em">${c.weeks}</div>
+        <div style="font-size:13px;font-weight:700;margin-top:2px">${c.cert}</div>
+      </div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.6;padding-top:2px">${c.task}</div>
+    </div>`).join('');
+
+  document.getElementById('schedule-output').style.display = 'block';
+  document.getElementById('schedule-output').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  toast('✓ Schedule built!', 'gold');
+}
+
+init();
+</script>
+
+<!-- Stripe Embedded Checkout -->
+<div id="itb-overlay" style="position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.92);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:20px;">
+  <div style="position:relative;background:#1a1a1a;border:1px solid rgba(201,168,76,0.3);border-radius:20px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,0.8);">
+    <button onclick="closeITBCheckout()" style="position:absolute;top:14px;right:14px;background:rgba(255,255,255,0.1);border:none;color:#fff;width:34px;height:34px;border-radius:50%;font-size:18px;cursor:pointer;z-index:10;line-height:34px;text-align:center;">&#x2715;</button>
+    <div style="padding:22px 22px 6px;">
+      <div style="font-weight:800;font-size:17px;color:#fff;">&#x1F512; Secure Enrollment</div>
+      <p style="color:#888;font-size:12px;margin:4px 0 0;">Powered by Stripe &middot; SSL Encrypted &middot; Cancel anytime</p>
+    </div>
+    <div id="itb-body" style="padding:0 14px 22px;min-height:260px;">
+      <div id="itb-spin" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:56px 0;gap:14px;">
+        <div style="width:38px;height:38px;border:3px solid rgba(201,168,76,0.2);border-top-color:#c9a84c;border-radius:50%;animation:itb-spin 0.7s linear infinite;"></div>
+        <span style="color:#888;font-size:13px;">Preparing secure checkout...</span>
+      </div>
+    </div>
+  </div>
+</div>
+<style>
+@keyframes itb-spin{to{transform:rotate(360deg)}}
+#itb-overlay{display:none}
+#itb-overlay.open{display:flex}
+</style>
+<script>
+var _itbs=null,_itbi=null;
+function _itbStripe(){if(!_itbs)_itbs=Stripe('pk_live_51TFgf8KnbiTjogJTiYbfvk0w2ILh3iZKn4q9Z4vz9Ctt7wMFFG7iEd55eQG1gNBk1aJSDl6fl9J7Lij2k6JemRbA00t6dOCUIo');return _itbs;}
+function closeITBCheckout(){
+  var o=document.getElementById('itb-overlay');
+  if(o)o.classList.remove('open');
+  document.body.style.overflow='';
+  if(_itbi){_itbi.destroy();_itbi=null;}
+  var m=document.getElementById('itb-mount');if(m)m.remove();
+  var s=document.getElementById('itb-spin');if(s)s.style.display='flex';
+}
+async function openITBCheckout(plan){
+  var o=document.getElementById('itb-overlay'),b=document.getElementById('itb-body'),s=document.getElementById('itb-spin');
+  if(!o)return;
+  o.classList.add('open');
+  document.body.style.overflow='hidden';
+  if(s)s.style.display='flex';
+  var prev=document.getElementById('itb-mount');if(prev)prev.remove();
+  if(_itbi){_itbi.destroy();_itbi=null;}
+  try{
+    var r=await fetch('/.netlify/functions/create-checkout-session',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({plan:plan})});
+    var d=await r.json();
+    if(d.error)throw new Error(d.error);
+    if(s)s.style.display='none';
+    var m=document.createElement('div');m.id='itb-mount';b.appendChild(m);
+    _itbi=await _itbStripe().initEmbeddedCheckout({fetchClientSecret:function(){return Promise.resolve(d.clientSecret);}});
+    _itbi.mount('#itb-mount');
+  }catch(e){
+    if(s)s.innerHTML='<p style="color:#f87171;text-align:center;padding:30px 16px;">Unable to load checkout. Please try again.</p>';
+    console.error('Checkout error:',e);
+  }
+}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeITBCheckout();});
+document.getElementById('itb-overlay').addEventListener('click',function(e){if(e.target===this)closeITBCheckout();});
+</script>
+
+</body>
+</html>
