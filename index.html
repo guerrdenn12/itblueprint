@@ -66,7 +66,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(8,8,8,0.95);
 .price-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--border);max-width:600px;margin:0 auto 32px}
 .price-card{background:var(--black);padding:36px 28px;text-align:center}
 .price-card.featured{background:var(--gold)}
-.price-card.featured *{color:var(--black)!important}
+.price-card.featured *:not(button){color:var(--black)!important}
 .price-label{font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
 .price-amt{font-family:'Bebas Neue',sans-serif;font-size:64px;line-height:1;color:var(--white)}
 .price-per{font-size:12px;color:var(--muted);margin-top:4px}
@@ -298,14 +298,14 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(8,8,8,0.95);
         <div class="price-amt">$1,000</div>
         <div class="price-per">one time · best value</div>
         <div class="price-sub">Full 90-day program + Pluralsight access ($564 value)</div>
-        <button onclick="openITBCheckout('pay_in_full')" style="margin-top:20px;width:100%;padding:14px;background:#c9a84c;color:#000;border:none;border-radius:10px;font-weight:800;font-size:15px;cursor:pointer;">Enroll Now — $1,000 →</button>
+        <button onclick="openITBCheckout('pay_in_full')" style="margin-top:20px;width:100%;padding:14px;background:#4f8fff;color:#000;border:none;border-radius:10px;font-weight:800;font-size:15px;cursor:pointer;">Enroll Now — $1,000 →</button>
       </div>
       <div class="price-card featured">
         <div class="price-label">Payment Plan</div>
         <div class="price-amt">$167</div>
         <div class="price-per">per month · 6 months</div>
         <div class="price-sub">Same access. Less than $40/week.</div>
-        <button onclick="openITBCheckout('payment_plan')" style="margin-top:20px;width:100%;padding:14px;background:#000;color:#c9a84c;border:2px solid #c9a84c;border-radius:10px;font-weight:800;font-size:15px;cursor:pointer;">Start Plan — $167/mo →</button>
+        <button onclick="openITBCheckout('payment_plan')" style="margin-top:20px;width:100%;padding:14px;background:#000;color:#4f8fff;border:2px solid #4f8fff;border-radius:10px;font-weight:800;font-size:15px;cursor:pointer;">Start Plan — $167/mo →</button>
       </div>
     </div>
     <button class="btn-gold" onclick="openApply()">Apply Now →</button>
@@ -958,7 +958,7 @@ init();
     </div>
     <div id="itb-body" style="padding:0 14px 22px;min-height:260px;">
       <div id="itb-spin" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:56px 0;gap:14px;">
-        <div style="width:38px;height:38px;border:3px solid rgba(201,168,76,0.2);border-top-color:#c9a84c;border-radius:50%;animation:itb-spin 0.7s linear infinite;"></div>
+        <div style="width:38px;height:38px;border:3px solid rgba(79,143,255,0.2);border-top-color:#4f8fff;border-radius:50%;animation:itb-spin 0.7s linear infinite;"></div>
         <span style="color:#888;font-size:13px;">Preparing secure checkout...</span>
       </div>
     </div>
