@@ -243,7 +243,29 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(8,8,8,0.95);
     <p class="hero-sub">So I'm becoming that person. <strong>The IT Blueprint</strong> — from zero to your first IT job in 90 days. No degree. Not a lot of money. No excuses.</p>
     <button class="btn-gold" onclick="openApply()">I'm Ready — Show Me How</button>
     <p class="price-note">Starting at <strong>$167/month</strong> · Pluralsight access included · Limited spots</p>
+    <a href="#roadmap" style="margin-top:18px;font-size:12px;color:var(--gold);letter-spacing:.05em;text-decoration:underline">Or grab the free 90-Day Roadmap →</a>
   </section>
+
+  <!-- FREE ROADMAP LEAD MAGNET -->
+  <div id="roadmap" style="background:var(--gray);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:64px 24px">
+    <div style="max-width:520px;margin:0 auto;text-align:center">
+      <div class="label">Free Download</div>
+      <h2 class="h2" style="font-size:clamp(32px,5vw,48px);line-height:1">The 90-Day<br>IT Job Roadmap</h2>
+      <p class="muted" style="margin:18px auto 28px;max-width:440px">The exact plan I wish I had. No degree, no debt, no fluff. In your inbox in 30 seconds.</p>
+      <div id="roadmap-form" style="max-width:360px;margin:0 auto">
+        <div class="field"><input id="rm-name" type="text" placeholder="First name" /></div>
+        <div class="field"><input id="rm-email" type="email" placeholder="Your email" /></div>
+        <button class="btn-full" onclick="captureEmail()">Send Me The Roadmap →</button>
+        <div id="rm-msg"></div>
+        <p style="font-size:11px;color:var(--muted);margin-top:14px">No spam. Unsubscribe anytime.</p>
+      </div>
+      <div id="roadmap-success" style="display:none;padding:28px 24px;border:1px solid var(--gold);background:rgba(201,168,76,0.06);max-width:420px;margin:0 auto">
+        <h3 style="font-family:'Bebas Neue',sans-serif;font-size:28px;margin-bottom:8px;color:var(--gold)">Check Your Email.</h3>
+        <p class="muted" style="margin-bottom:20px">Your Roadmap is on its way. Or download it right now:</p>
+        <a id="rm-download-link" href="#" target="_blank" rel="noopener" class="btn-gold" style="display:inline-block">Download PDF →</a>
+      </div>
+    </div>
+  </div>
 
   <!-- WHAT YOU GET -->
   <div style="background:var(--gray);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:64px 24px">
@@ -606,6 +628,43 @@ async function submitApplication() {
 
   msg.className='msg success'; msg.textContent='✓ Application received! Dennis will reach out within 24 hours.';
   setTimeout(closeApply, 3000);
+}
+
+// ── LEAD MAGNET ──
+const ROADMAP_PDF_URL = 'https://ylqbowawblpdoxbbiuey.supabase.co/storage/v1/object/public/lead-magnets/90-Day-IT-Job-Roadmap-final.pdf';
+
+async function captureEmail() {
+  const name = document.getElementById('rm-name').value.trim();
+  const email = document.getElementById('rm-email').value.trim();
+  const msg = document.getElementById('rm-msg');
+
+  if (!name || !email.includes('@')) {
+    msg.className = 'msg error';
+    msg.textContent = 'Please enter your first name and a valid email.';
+    return;
+  }
+
+  msg.className = '';
+  msg.textContent = '';
+
+  const { error } = await sb.from('email_subscribers').insert({
+    email: email.toLowerCase(),
+    first_name: name,
+    source: 'lead_magnet_roadmap',
+    tags: ['roadmap_pdf']
+  });
+
+  // 23505 = duplicate email; treat as success (don't punish returning visitors)
+  if (error && error.code !== '23505') {
+    console.error('captureEmail error:', error);
+    msg.className = 'msg error';
+    msg.textContent = 'Something went wrong. Try again.';
+    return;
+  }
+
+  document.getElementById('roadmap-form').style.display = 'none';
+  document.getElementById('rm-download-link').href = ROADMAP_PDF_URL;
+  document.getElementById('roadmap-success').style.display = 'block';
 }
 
 // ── AUTH ──
