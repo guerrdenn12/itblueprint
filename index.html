@@ -225,7 +225,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(8,8,8,0.95);
     <div class="field">
       <label>Payment Option</label>
       <select id="app-plan">
-        <option value="pay_in_full">Pay in Full — $1,000 (includes Pluralsight)</option>
+        <option value="pay_in_full">Pay in Full — $1,000 (includes CBT Nuggets)</option>
         <option value="payment_plan">Payment Plan — $167/month x 6</option>
       </select>
     </div>
@@ -242,7 +242,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(8,8,8,0.95);
     <h1>Nobody Who<br>Looked Like Me<br><span>Showed Me</span><br>The Way.</h1>
     <p class="hero-sub">So I'm becoming that person. <strong>The IT Blueprint</strong> — from zero to your first IT job in 90 days. No degree. Not a lot of money. No excuses.</p>
     <button class="btn-gold" onclick="openApply()">I'm Ready — Show Me How</button>
-    <p class="price-note">Starting at <strong>$167/month</strong> · Pluralsight access included · Limited spots</p>
+    <p class="price-note">Starting at <strong>$167/month</strong> · CBT Nuggets access included · Limited spots</p>
     <a href="#roadmap" style="margin-top:18px;font-size:12px;color:var(--gold);letter-spacing:.05em;text-decoration:underline">Or grab the free 90-Day Roadmap →</a>
   </section>
 
@@ -274,8 +274,8 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(8,8,8,0.95);
       <h2 class="h2" style="text-align:center">Everything You Need to Get Hired</h2>
       <div class="modules">
         <div class="mod-featured">
-          <div class="mod-title">⭐ Pluralsight Full Access — Included ($564 value)</div>
-          <div class="mod-desc" style="color:#aaa;margin-top:6px">6,500+ expert courses · 3,500+ hands-on labs · CompTIA cert practice exams · AI & cloud sandboxes · Skill IQ assessments</div>
+          <div class="mod-title">⭐ CBT Nuggets Full Access — Included ($564 value)</div>
+          <div class="mod-desc" style="color:#aaa;margin-top:6px">Expert-led IT courses · Virtual labs · CompTIA cert practice exams · Accountability coaching · Skill assessments</div>
         </div>
         <div class="module"><div class="mod-num">01</div><div class="mod-title">Your Cert Roadmap</div><div class="mod-desc">A+, Network+, Security+ in order. No guessing. No wasted money on the wrong path.</div></div>
         <div class="module"><div class="mod-num">02</div><div class="mod-title">Study System + Timeline</div><div class="mod-desc">Week-by-week plan for each cert with free and low-cost resources.</div></div>
@@ -297,7 +297,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(8,8,8,0.95);
         <div class="price-label">Pay In Full</div>
         <div class="price-amt">$1,000</div>
         <div class="price-per">one time · best value</div>
-        <div class="price-sub">Full 90-day program + Pluralsight access ($564 value)</div>
+        <div class="price-sub">Full 90-day program + CBT Nuggets access ($564 value)</div>
         <button onclick="openITBCheckout('pay_in_full')" style="margin-top:20px;width:100%;padding:14px;background:#4f8fff;color:#000;border:none;border-radius:10px;font-weight:800;font-size:15px;cursor:pointer;">Enroll Now — $1,000 →</button>
       </div>
       <div class="price-card featured">
@@ -405,9 +405,9 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(8,8,8,0.95);
       <div class="panel">
         <div class="panel-title">Training Resources</div>
         <div class="resource-list">
-          <div class="resource-item" onclick="openLink('https://www.pluralsight.com')">
+          <div class="resource-item" onclick="openLink('https://www.cbtnuggets.com')">
             <span class="resource-icon">🎓</span>
-            <div class="resource-text"><strong>Pluralsight</strong><span>Your included training platform — 6,500+ courses</span></div>
+            <div class="resource-text"><strong>CBT Nuggets</strong><span>Your included training platform — expert-led IT courses</span></div>
           </div>
           <div class="resource-item" onclick="openLink('https://www.professormesser.com')">
             <span class="resource-icon">📹</span>
@@ -794,14 +794,14 @@ function renderMembers(members) {
   if (!members.length) { wrap.innerHTML = '<div class="empty">No members yet.</div>'; return; }
 
   wrap.innerHTML = `<table class="member-table">
-    <thead><tr><th>Name</th><th>Email</th><th>Plan</th><th>Status</th><th>Pluralsight</th><th>Start</th></tr></thead>
+    <thead><tr><th>Name</th><th>Email</th><th>Plan</th><th>Status</th><th>CBT Nuggets</th><th>Start</th></tr></thead>
     <tbody>${members.map(m => `
       <tr>
         <td>${m.full_name}</td>
         <td style="color:var(--muted)">${m.email}</td>
         <td>${m.plan === 'pay_in_full' ? '$1,000' : '$167/mo'}</td>
         <td><span class="badge ${m.status}">${m.status}</span></td>
-        <td>${m.pluralsight_invited ? '<span style="color:var(--green)">✓ Invited</span>' : '<button class="btn-sm" style="background:var(--blue);color:#000;padding:4px 10px" onclick="markPluralsight(\''+m.id+'\')">Invite</button>'}</td>
+        <td>${m.cbtnuggets_invited ? '<span style="color:var(--green)">✓ Invited</span>' : '<button class="btn-sm" style="background:var(--blue);color:#000;padding:4px 10px" onclick="markCbtNuggets(\''+m.id+'\')">Invite</button>'}</td>
         <td style="color:var(--muted)">${m.cohort_start || '—'}</td>
       </tr>`).join('')}
     </tbody></table>`;
@@ -821,9 +821,9 @@ async function rejectApp(id) {
   loadAdminData();
 }
 
-async function markPluralsight(memberId) {
-  await sb.from('members').update({ pluralsight_invited: true }).eq('id', memberId);
-  toast('✓ Marked as Pluralsight invited', 'gold');
+async function markCbtNuggets(memberId) {
+  await sb.from('members').update({ cbtnuggets_invited: true }).eq('id', memberId);
+  toast('✓ Marked as CBT Nuggets invited', 'gold');
   loadAdminData();
 }
 
@@ -900,10 +900,10 @@ function buildSchedule() {
   const orderedDays = dayOrder.filter(d => selectedDays.includes(d));
 
   const activities = [
-    { label: 'Watch Pluralsight / Messer video', icon: '📹', color: 'var(--blue)' },
+    { label: 'Watch CBT Nuggets / Messer video', icon: '📹', color: 'var(--blue)' },
     { label: 'Practice questions (ExamCompass)', icon: '✏️', color: 'var(--purple)' },
     { label: 'Review notes + weak areas', icon: '📋', color: 'var(--gold)' },
-    { label: 'Hands-on lab (Pluralsight)', icon: '🖥️', color: 'var(--green)' },
+    { label: 'Hands-on lab (CBT Nuggets)', icon: '🖥️', color: 'var(--green)' },
     { label: 'Full mock exam', icon: '🎯', color: 'var(--red)' },
     { label: 'Community check-in + Discord', icon: '💬', color: 'var(--muted)' },
     { label: 'Review + plan next session', icon: '📅', color: 'var(--gold)' },
