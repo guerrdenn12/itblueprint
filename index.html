@@ -7,6 +7,25 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://js.stripe.com/v3/"></script>
+
+<!-- ═══════════════ ANALYTICS ═══════════════ -->
+<!-- GA4: Replace G-REPLACE_ME with your Measurement ID from analytics.google.com -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-REPLACE_ME"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-REPLACE_ME');
+</script>
+
+<!-- Meta Pixel: Replace FB_PIXEL_ID_REPLACE_ME with your Pixel ID from business.facebook.com -->
+<script>
+  !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', 'FB_PIXEL_ID_REPLACE_ME');
+  fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=FB_PIXEL_ID_REPLACE_ME&ev=PageView&noscript=1"/></noscript>
+<!-- ═══════════════ END ANALYTICS ═══════════════ -->
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -274,7 +293,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(8,8,8,0.95);
       <h2 class="h2" style="text-align:center">Everything You Need to Get Hired</h2>
       <div class="modules">
         <div class="mod-featured">
-          <div class="mod-title">⭐ CBT Nuggets Full Access — Included ($564 value)</div>
+          <div class="mod-title">⭐ CBT Nuggets Full Access — Included ($177 value)</div>
           <div class="mod-desc" style="color:#aaa;margin-top:6px">Expert-led IT courses · Virtual labs · CompTIA cert practice exams · Accountability coaching · Skill assessments</div>
         </div>
         <div class="module"><div class="mod-num">01</div><div class="mod-title">Your Cert Roadmap</div><div class="mod-desc">A+, Network+, Security+ in order. No guessing. No wasted money on the wrong path.</div></div>
@@ -297,7 +316,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(8,8,8,0.95);
         <div class="price-label">Pay In Full</div>
         <div class="price-amt">$1,000</div>
         <div class="price-per">one time · best value</div>
-        <div class="price-sub">Full 90-day program + CBT Nuggets access ($564 value)</div>
+        <div class="price-sub">Full 90-day program + CBT Nuggets access ($177 value)</div>
         <button onclick="openITBCheckout('pay_in_full')" style="margin-top:20px;width:100%;padding:14px;background:#4f8fff;color:#000;border:none;border-radius:10px;font-weight:800;font-size:15px;cursor:pointer;">Enroll Now — $1,000 →</button>
       </div>
       <div class="price-card featured">
@@ -665,6 +684,10 @@ async function captureEmail() {
   document.getElementById('roadmap-form').style.display = 'none';
   document.getElementById('rm-download-link').href = ROADMAP_PDF_URL;
   document.getElementById('roadmap-success').style.display = 'block';
+
+  // Fire conversion events on successful lead capture
+  if (typeof gtag === 'function') gtag('event', 'generate_lead', { source: 'lead_magnet_roadmap' });
+  if (typeof fbq === 'function') fbq('track', 'Lead', { content_name: '90-Day Roadmap' });
 }
 
 // ── AUTH ──
