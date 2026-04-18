@@ -3,3 +3,15 @@
 
 [functions]
   node_bundler = "esbuild"
+
+[[redirects]]
+  from = "/roadmap"
+  to = "/#roadmap"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/unsubscribe"
+  to = "https://ylqbowawblpdoxbbiuey.supabase.co/functions/v1/unsubscribe"
+  status = 200
+  force = true
