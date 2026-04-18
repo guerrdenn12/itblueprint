@@ -47,7 +47,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(8,8,8,0.95);
 .nav-links{display:flex;align-items:center;gap:8px}
 .nav-btn{padding:7px 16px;font-size:13px;font-weight:600;border:1px solid var(--border);background:transparent;color:var(--muted);border-radius:6px;transition:all .2s}
 .nav-btn:hover{color:var(--white);border-color:#444}
-.nav-btn.primary{background:var(--gold);color:var(--black);border-color:var(--gold)}
+.nav-btn.primary{background:var(--gold);color:var(--black);border-color:var(--gold);white-space:nowrap;min-height:44px;display:flex;align-items:center}
 .nav-btn.primary:hover{background:var(--gold-light)}
 
 /* ── LANDING ── */
@@ -62,7 +62,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(8,8,8,0.95);
 .hero-sub strong{color:var(--blue)}
 .btn-gold{display:inline-block;background:var(--gold);color:var(--black);font-weight:800;font-size:13px;letter-spacing:.08em;text-transform:uppercase;padding:15px 40px;border:none;border-radius:0;transition:background .2s}
 .btn-gold:hover{background:var(--gold-light)}
-.price-note{margin-top:12px;font-size:12px;color:var(--muted)}
+.price-note{margin-top:12px;font-size:12px;color:#999}
 .price-note strong{color:var(--white)}
 
 /* Sections */
@@ -77,7 +77,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(8,8,8,0.95);
 .module{background:var(--black);padding:28px 24px}
 .mod-num{font-family:'Bebas Neue',sans-serif;font-size:40px;color:var(--border);line-height:1;margin-bottom:6px}
 .mod-title{font-size:14px;font-weight:700;margin-bottom:6px}
-.mod-desc{font-size:12px;color:var(--muted);line-height:1.6}
+.mod-desc{font-size:12px;color:#999;line-height:1.6}
 .mod-featured{background:rgba(201,168,76,0.06);border-top:2px solid var(--gold);grid-column:1/-1;padding:24px}
 .mod-featured .mod-title{color:var(--gold);font-size:15px}
 
@@ -262,7 +262,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(8,8,8,0.95);
     <p class="hero-sub">So I'm becoming that person. <strong>The IT Blueprint</strong> — from zero to your first IT job in 90 days. No degree. Not a lot of money. No excuses.</p>
     <button class="btn-gold" onclick="openApply()">I'm Ready — Show Me How</button>
     <p class="price-note">Starting at <strong>$167/month</strong> · CBT Nuggets access included · Limited spots</p>
-    <a href="#roadmap" style="margin-top:18px;font-size:12px;color:var(--gold);letter-spacing:.05em;text-decoration:underline">Or grab the free 90-Day Roadmap →</a>
+    <a href="#roadmap" style="margin-top:12px;font-size:12px;color:var(--gold);letter-spacing:.05em;text-decoration:underline;display:inline-block;padding:14px 8px">Or grab the free 90-Day Roadmap →</a>
   </section>
 
   <!-- FREE ROADMAP LEAD MAGNET -->
@@ -327,8 +327,8 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(8,8,8,0.95);
         <button onclick="openITBCheckout('payment_plan')" style="margin-top:20px;width:100%;padding:14px;background:#000;color:#4f8fff;border:2px solid #4f8fff;border-radius:10px;font-weight:800;font-size:15px;cursor:pointer;">Start Plan — $167/mo →</button>
       </div>
     </div>
-    <button class="btn-gold" onclick="openApply()">Apply Now →</button>
     <p class="muted" style="margin-top:16px;font-size:13px"><strong style="color:var(--white)">My promise:</strong> I will stand by you until the end.</p>
+    <p style="margin-top:14px;font-size:12px;color:var(--muted)">Have questions first? <a onclick="openApply()" style="color:var(--gold);cursor:pointer;text-decoration:underline">Apply instead →</a></p>
   </div>
 </div>
 
@@ -656,6 +656,7 @@ async function captureEmail() {
   const name = document.getElementById('rm-name').value.trim();
   const email = document.getElementById('rm-email').value.trim();
   const msg = document.getElementById('rm-msg');
+  const btn = document.querySelector('#roadmap-form .btn-full');
 
   if (!name || !email.includes('@')) {
     msg.className = 'msg error';
@@ -663,6 +664,8 @@ async function captureEmail() {
     return;
   }
 
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
   msg.className = '';
   msg.textContent = '';
 
@@ -678,6 +681,8 @@ async function captureEmail() {
     console.error('captureEmail error:', error);
     msg.className = 'msg error';
     msg.textContent = 'Something went wrong. Try again.';
+    btn.disabled = false;
+    btn.textContent = 'Send Me The Roadmap →';
     return;
   }
 
